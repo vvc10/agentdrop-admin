@@ -38,9 +38,12 @@ import {
 interface BetaUser {
   id: string;
   email: string;
+  name: string;
   status: 'pending' | 'approved';
   joinedDate: string;
   source: string;
+  approvalEmailSentAt?: string;
+  approvalEmailStatus: 'not_sent' | 'sent' | 'delivered' | 'opened' | 'failed';
 }
 
 export default function BetaPage() {
@@ -51,8 +54,10 @@ export default function BetaPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedEmailStatus, setSelectedEmailStatus] = useState<string>('all');
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [emailLoading, setEmailLoading] = useState<string | null>(null);
 
   const handleSignOut = async () => {
     await signOut();
@@ -137,6 +142,36 @@ export default function BetaPage() {
     }
   };
 
+  const handleSendEmail = async (userId: string) => {
+    try {
+      setEmailLoading(userId);
+      setError(null);
+      
+      const response = await fetch('/api/admin/beta-users/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          waitlistId: userId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send email');
+      }
+
+      // Refresh the data
+      await fetchBetaUsers();
+    } catch (err) {
+      console.error('Error sending email:', err);
+      setError(err instanceof Error ? err.message : 'Failed to send email. Please try again.');
+    } finally {
+      setEmailLoading(null);
+    }
+  };
+
   useEffect(() => {
     if (!isLoaded) return;
     if (!isSignedIn) {
@@ -149,7 +184,8 @@ export default function BetaPage() {
   const filteredUsers = betaUsers.filter(user => {
     const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
-    return matchesSearch && matchesStatus;
+    const matchesEmailStatus = selectedEmailStatus === 'all' || user.approvalEmailStatus === selectedEmailStatus;
+    return matchesSearch && matchesStatus && matchesEmailStatus;
   });
 
   const getStatusBadge = (status: string) => {
@@ -169,6 +205,27 @@ export default function BetaPage() {
 
   const canApprove = (status: string) => status === 'pending';
   const canReject = (status: string) => status === 'approved';
+  
+  const getEmailStatusBadge = (status: string, sentAt?: string) => {
+    switch (status) {
+      case 'not_sent':
+        return <Badge className="bg-slate-100 text-slate-800 border-slate-200">Not Sent</Badge>;
+      case 'sent':
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Sent</Badge>;
+      case 'delivered':
+        return <Badge className="bg-green-100 text-green-800 border-green-200">Delivered</Badge>;
+      case 'opened':
+        return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">Opened</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800 border-red-200">Failed</Badge>;
+      default:
+        return <Badge className="bg-slate-100 text-slate-800 border-slate-200">Unknown</Badge>;
+    }
+  };
+
+  const canSendEmail = (status: string, emailStatus: string) => {
+    return status === 'approved' && emailStatus === 'not_sent';
+  };
 
   if (!isLoaded || isLoading) {
     return (
@@ -247,7 +304,7 @@ export default function BetaPage() {
         )}
 
         {/* Beta Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="border-0 shadow-xl bg-gradient-to-br from-yellow-500 to-orange-500 text-white hover:shadow-2xl transition-shadow duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-sm font-medium text-yellow-100">Pending Approval</CardTitle>
@@ -277,6 +334,40 @@ export default function BetaPage() {
               </p>
             </CardContent>
           </Card>
+
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:shadow-2xl transition-shadow duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-blue-100">Emails Sent</CardTitle>
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <Send className="h-4 w-4 text-white" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold mb-1">
+                {betaUsers.filter(user => user.approvalEmailStatus !== 'not_sent').length}
+              </div>
+              <p className="text-xs text-blue-200">
+                Approval emails sent
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:shadow-2xl transition-shadow duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-purple-100">Emails Opened</CardTitle>
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <Eye className="h-4 w-4 text-white" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold mb-1">
+                {betaUsers.filter(user => user.approvalEmailStatus === 'opened').length}
+              </div>
+              <p className="text-xs text-purple-200">
+                Emails opened by users
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Search and Filters */}
@@ -299,6 +390,18 @@ export default function BetaPage() {
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
+            </select>
+            <select 
+              value={selectedEmailStatus}
+              onChange={(e) => setSelectedEmailStatus(e.target.value)}
+              className="px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Email Status</option>
+              <option value="not_sent">Not Sent</option>
+              <option value="sent">Sent</option>
+              <option value="delivered">Delivered</option>
+              <option value="opened">Opened</option>
+              <option value="failed">Failed</option>
             </select>
             <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
               <Send className="h-4 w-4 mr-2" />
@@ -324,6 +427,7 @@ export default function BetaPage() {
                   <tr className="border-b border-slate-200">
                     <th className="text-left py-3 px-4 font-medium text-slate-900">Email</th>
                     <th className="text-left py-3 px-4 font-medium text-slate-900">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-900">Email Status</th>
                     <th className="text-left py-3 px-4 font-medium text-slate-900">Source</th>
                     <th className="text-left py-3 px-4 font-medium text-slate-900">Joined</th>
                     <th className="text-left py-3 px-4 font-medium text-slate-900">Actions</th>
@@ -337,6 +441,14 @@ export default function BetaPage() {
                       </td>
                       <td className="py-4 px-4">
                         {getStatusBadge(user.status)}
+                      </td>
+                      <td className="py-4 px-4">
+                        {getEmailStatusBadge(user.approvalEmailStatus, user.approvalEmailSentAt)}
+                        {user.approvalEmailSentAt && (
+                          <div className="text-xs text-slate-500 mt-1">
+                            {new Date(user.approvalEmailSentAt).toLocaleDateString()}
+                          </div>
+                        )}
                       </td>
                       <td className="py-4 px-4 text-sm text-slate-600">
                         {user.source}
@@ -376,6 +488,38 @@ export default function BetaPage() {
                                 <UserX className="h-4 w-4 mr-1" />
                               )}
                               Revoke Access
+                            </Button>
+                          )}
+                          {canSendEmail(user.status, user.approvalEmailStatus) && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleSendEmail(user.id)}
+                              disabled={emailLoading === user.id}
+                              className="text-blue-600 hover:text-blue-700"
+                            >
+                              {emailLoading === user.id ? (
+                                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-1" />
+                              ) : (
+                                <Send className="h-4 w-4 mr-1" />
+                              )}
+                              Send Email
+                            </Button>
+                          )}
+                          {user.approvalEmailStatus === 'failed' && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleSendEmail(user.id)}
+                              disabled={emailLoading === user.id}
+                              className="text-orange-600 hover:text-orange-700"
+                            >
+                              {emailLoading === user.id ? (
+                                <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin mr-1" />
+                              ) : (
+                                <Send className="h-4 w-4 mr-1" />
+                              )}
+                              Resend
                             </Button>
                           )}
                           <Button variant="ghost" size="sm">

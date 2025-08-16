@@ -20,6 +20,7 @@
     "next": "15.2.4",
     "react": "^19",
     "react-dom": "^19",
+    "resend": "^6.0.1",
     "sonner": "^1.7.1",
     "styled-jsx": "^5.1.2",
     "tailwind-merge": "^2.5.5",

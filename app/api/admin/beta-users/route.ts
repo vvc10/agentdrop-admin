@@ -32,9 +32,12 @@ export async function GET(request: NextRequest) {
       .select(`
         id,
         email,
+        name,
         created_at,
         is_beta_user,
-        source
+        source,
+        approval_email_sent_at,
+        approval_email_status
       `)
       .order('created_at', { ascending: false });
 
@@ -47,9 +50,12 @@ export async function GET(request: NextRequest) {
     const transformedUsers = waitlistUsers.map(user => ({
       id: user.id,
       email: user.email,
+      name: user.name,
       status: user.is_beta_user ? 'approved' : 'pending',
       joinedDate: user.created_at,
-      source: user.source || 'Website'
+      source: user.source || 'Website',
+      approvalEmailSentAt: user.approval_email_sent_at,
+      approvalEmailStatus: user.approval_email_status || 'not_sent'
     }));
 
     return NextResponse.json({ users: transformedUsers });
