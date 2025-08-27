@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
 import { 
   Users, 
   Mail, 
@@ -107,56 +109,13 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white shadow-lg border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <Button 
-                onClick={() => router.push('/')} 
-                variant="ghost" 
-                size="icon"
-                className="mr-4"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
-                <BarChart3 className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-slate-900">Analytics Dashboard</h1>
-                <p className="text-sm text-slate-600">Detailed insights and metrics</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 px-3 py-1">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Admin Access
-              </Badge>
-              <div className="text-right">
-                <p className="text-sm font-medium text-slate-900">
-                  {user?.firstName} {user?.lastName}
-                </p>
-                <p className="text-xs text-slate-600">
-                  {user?.emailAddresses[0]?.emailAddress}
-                </p>
-              </div>
-              <Button onClick={handleSignOut} variant="ghost" size="icon">
-                <LogOut className="h-5 w-5 text-slate-600" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-4xl font-bold text-slate-900 mb-2">Analytics Overview 📊</h2>
-          <p className="text-slate-600 text-lg">Comprehensive insights into your platform performance.</p>
-        </div>
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
+      
+      <div className="flex-1 flex flex-col ml-64">
+        <Header breadcrumbs={["Analytics", "Overview"]} />
+        
+        <main className="flex-1 p-6 overflow-y-auto">
 
         {/* Error Message */}
         {error && (
@@ -170,121 +129,105 @@ export default function AnalyticsPage() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:shadow-2xl transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-blue-100">Total Users</CardTitle>
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <Users className="h-4 w-4 text-white" />
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Total Users</h3>
+                <Users className="h-6 w-6 text-gray-600" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-1">{analytics?.totalUsers || 0}</div>
-              <p className="text-xs text-blue-200">
+              <div className="text-3xl font-bold text-gray-900 mb-2">{analytics?.totalUsers || 0}</div>
+              <div className="text-sm text-gray-600">
                 All time registered users
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white hover:shadow-2xl transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-emerald-100">Active Users</CardTitle>
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <Activity className="h-4 w-4 text-white" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-1">{analytics?.activeUsers || 0}</div>
-              <p className="text-xs text-emerald-200">
+            </div>
+
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Active Users</h3>
+                <Activity className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">{analytics?.activeUsers || 0}</div>
+              <div className="text-sm text-gray-600">
                 Users active this month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:shadow-2xl transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-purple-100">New Users</CardTitle>
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <UserPlus className="h-4 w-4 text-white" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-1">{analytics?.newUsersThisWeek || 0}</div>
-              <p className="text-xs text-purple-200">
+            </div>
+
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">New Users</h3>
+                <UserPlus className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">{analytics?.newUsersThisWeek || 0}</div>
+              <div className="text-sm text-gray-600">
                 This week
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white hover:shadow-2xl transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-amber-100">Conversion Rate</CardTitle>
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <Target className="h-4 w-4 text-white" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-1">{analytics?.conversionRate || 0}%</div>
-              <p className="text-xs text-amber-200">
+            </div>
+
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Conversion Rate</h3>
+                <Target className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">{analytics?.conversionRate || 0}%</div>
+              <div className="text-sm text-gray-600">
                 Signup to active
-              </p>
-            </CardContent>
-          </Card>
+              </div>
+            </div>
         </div>
 
         {/* Detailed Analytics */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Referrers */}
-          <Card className="border-0 shadow-lg bg-white">
-            <CardHeader>
-              <CardTitle className="flex items-center text-xl">
-                <TrendingUp className="h-6 w-6 mr-2 text-slate-600" />
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2 text-gray-600" />
                 Top Referrers
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {analytics?.topReferrers.map((referrer, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+              </h3>
+              <div className="space-y-3">
+                {analytics?.topReferrers && analytics.topReferrers.length > 0 ? (
+                  analytics.topReferrers.map((referrer, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                      <span className="text-sm font-medium text-slate-900">{referrer.source}</span>
+                        <span className="text-sm font-medium text-gray-900">{referrer.source}</span>
+                      </div>
+                      <span className="text-sm text-gray-600">{referrer.count} users</span>
                     </div>
-                    <span className="text-sm text-slate-600">{referrer.count} users</span>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <TrendingUp className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    <p>No referrer data available</p>
                   </div>
-                ))}
+                )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
           {/* Session Analytics */}
-          <Card className="border-0 shadow-lg bg-white">
-            <CardHeader>
-              <CardTitle className="flex items-center text-xl">
-                <Clock className="h-6 w-6 mr-2 text-slate-600" />
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Clock className="h-5 w-5 mr-2 text-gray-600" />
                 Session Analytics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <Zap className="h-5 w-5 text-amber-500 mr-3" />
-                    <span className="text-sm font-medium text-slate-900">Average Session Time</span>
+                    <span className="text-sm font-medium text-gray-900">Average Session Time</span>
                   </div>
-                  <span className="text-sm text-slate-600">{analytics?.averageSessionTime || 0} minutes</span>
+                  <span className="text-sm text-gray-600">{analytics?.averageSessionTime || 0} minutes</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <Calendar className="h-5 w-5 text-blue-500 mr-3" />
-                    <span className="text-sm font-medium text-slate-900">Monthly Growth</span>
+                    <span className="text-sm font-medium text-gray-900">Monthly Growth</span>
                   </div>
-                  <span className="text-sm text-slate-600">+12.5%</span>
+                  <span className="text-sm text-gray-600">+12.5%</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
         </div>
       </main>
+      </div>
     </div>
   );
 } 

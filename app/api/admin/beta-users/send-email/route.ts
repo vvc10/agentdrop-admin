@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseClient } from '@/lib/supabase-client';
 import EmailService from '@/lib/email-service';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Helper function to get resend count for a waitlist entry
+async function getResendCount(supabase: any, waitlistId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('email_tracking')
+    .select('*', { count: 'exact', head: true })
+    .eq('waitlist_id', waitlistId)
+    .eq('email_type', 'beta_approval')
+    .eq('metadata->is_resend', true);
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+  if (error) {
+    console.error('Error getting resend count:', error);
+    return 0;
+  }
+
+  return count || 0;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +27,8 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const supabase = createSupabaseClient();
 
     // Check if user is admin
     const { data: profile, error: profileError } = await supabase
@@ -27,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    const { waitlistId } = await request.json();
+    const { waitlistId, isResend = false } = await request.json();
 
     if (!waitlistId) {
       return NextResponse.json({ error: 'Waitlist ID is required' }, { status: 400 });
@@ -49,10 +63,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User is not approved for beta access' }, { status: 400 });
     }
 
-    // Check if email was already sent
-    if (waitlistUser.approval_email_sent_at) {
+    // For first-time sends, check if email was already sent
+    if (!isResend && waitlistUser.approval_email_sent_at) {
       return NextResponse.json({ 
-        error: 'Approval email already sent',
+        error: 'Approval email already sent. Use resend option.',
         sentAt: waitlistUser.approval_email_sent_at 
       }, { status: 409 });
     }
@@ -70,12 +84,18 @@ export async function POST(request: NextRequest) {
     const emailResult = await emailService.sendBetaApprovalEmail(emailData, request.url);
 
     // Update waitlist entry with email tracking
+    const updateData = {
+      approval_email_status: 'sent'
+    };
+
+    // Only update sent_at timestamp for first-time sends
+    if (!isResend) {
+      updateData.approval_email_sent_at = new Date().toISOString();
+    }
+
     const { error: updateError } = await supabase
       .from('waitlist')
-      .update({
-        approval_email_sent_at: new Date().toISOString(),
-        approval_email_status: 'sent'
-      })
+      .update(updateData)
       .eq('id', waitlistId);
 
     if (updateError) {
@@ -83,7 +103,7 @@ export async function POST(request: NextRequest) {
       // Don't fail the request, just log the error
     }
 
-    // Record email tracking
+    // Record email tracking (always insert new record for resends)
     const { error: trackingError } = await supabase
       .from('email_tracking')
       .insert([{
@@ -92,7 +112,12 @@ export async function POST(request: NextRequest) {
         recipient_email: waitlistUser.email,
         subject: emailResult.subject,
         resend_message_id: emailResult.resend_message_id,
-        metadata: emailResult.metadata,
+        metadata: {
+          ...emailResult.metadata,
+          is_resend: isResend,
+          original_sent_at: isResend ? waitlistUser.approval_email_sent_at : null,
+          resend_count: isResend ? (await getResendCount(supabase, waitlistId)) + 1 : 1
+        },
         status: 'sent'
       }]);
 
@@ -103,9 +128,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true,
-      message: 'Approval email sent successfully',
+      message: isResend ? 'Approval email resent successfully' : 'Approval email sent successfully',
       emailId: emailResult.resend_message_id,
-      sentAt: new Date().toISOString()
+      sentAt: new Date().toISOString(),
+      isResend: isResend
     });
 
   } catch (error) {

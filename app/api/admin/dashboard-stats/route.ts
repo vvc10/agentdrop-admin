@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient } from "@/lib/supabase-client";
 import { currentUser } from "@clerk/nextjs/server";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,6 +9,8 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const supabaseAdmin = createSupabaseClient();
 
     // Check admin status
     const { data: profile, error: profileError } = await supabaseAdmin
@@ -55,10 +52,35 @@ export async function GET(request: NextRequest) {
       .select("*", { count: "exact", head: true })
       .gte("created_at", sevenDaysAgo.toISOString());
 
+    // Get subscription stats
+    const { count: proUsers } = await supabaseAdmin
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("subscription_plan", "pro");
+
+    const { count: activeSubscriptions } = await supabaseAdmin
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("subscribed", true)
+      .gt("subscription_expires_at", new Date().toISOString());
+
+    // Get invite codes stats
+    const { count: totalInviteCodes } = await supabaseAdmin
+      .from("invite_codes")
+      .select("*", { count: "exact", head: true });
+
+    const { count: activeInviteCodes } = await supabaseAdmin
+      .from("invite_codes")
+      .select("*", { count: "exact", head: true })
+      .eq("is_active", true);
+
     // Calculate conversion rate
     const conversionRate = (betaInvited || 0) > 0 
       ? (((betaActivated || 0) / (betaInvited || 0)) * 100).toFixed(2) 
       : "0";
+
+    // Calculate monthly revenue (estimate based on pro users)
+    const monthlyRevenue = (proUsers || 0) * 19; // $19 per pro user
 
     return NextResponse.json({
       success: true,
@@ -68,7 +90,12 @@ export async function GET(request: NextRequest) {
         betaInvited: betaInvited || 0,
         betaActivated: betaActivated || 0,
         conversionRate,
-        recentSignups: recentSignups || 0
+        recentSignups: recentSignups || 0,
+        proUsers: proUsers || 0,
+        activeSubscriptions: activeSubscriptions || 0,
+        totalInviteCodes: totalInviteCodes || 0,
+        activeInviteCodes: activeInviteCodes || 0,
+        monthlyRevenue
       }
     });
 

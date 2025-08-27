@@ -31,6 +31,12 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
+# Email Service (Resend)
+RESEND_API_KEY=your_resend_api_key
+
+# Admin Panel URL (for email tracking)
+NEXT_PUBLIC_ADMIN_URL=http://localhost:3001
+
 # Clerk Authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 CLERK_SECRET_KEY=your_clerk_secret_key
@@ -67,11 +73,19 @@ The admin panel will run on `http://localhost:3001`
 - Beta invite tracking
 - Conversion rate monitoring
 
+### Email Management
+- **First-time sends**: Send approval emails to newly approved users
+- **Resend functionality**: Send emails multiple times to the same user
+- **Full tracking**: Each send is tracked separately in the database
+- **Resend analytics**: Track first-time vs resend email statistics
+- **Status tracking**: Monitor delivery, open, and failure rates
+
 ### Waitlist Management
 - View all waitlist entries
 - Send individual beta invites
 - Send batch beta invites
 - Track invite status
+- **Resend emails** - Send approval emails multiple times with full tracking
 
 ### Analytics
 - User growth metrics

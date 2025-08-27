@@ -1,154 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Agentdrop Beta!</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8fafc;
-        }
-        .container {
-            background: white;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            display: inline-block;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        .title {
-            color: #1f2937;
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            color: #6b7280;
-            font-size: 16px;
-            margin-bottom: 30px;
-        }
-        .content {
-            margin-bottom: 30px;
-        }
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 16px 32px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .features {
-            background: #f8fafc;
-            padding: 25px;
-            border-radius: 8px;
-            margin: 25px 0;
-        }
-        .feature {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .feature-icon {
-            background: #667eea;
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            font-size: 12px;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            color: #6b7280;
-            font-size: 14px;
-        }
-        .tracking-pixel {
-            width: 1px;
-            height: 1px;
-            opacity: 0;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome to Agentdrop Beta</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #374151;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0;
+      background-color: #ffffff;
+    }
+    .container { padding: 40px 24px; }
+    .header { text-align: center; margin-bottom: 36px; }
+    .logo { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; }
+    .logo-img { width: 32px; height: 32px; border-radius: 8px; }
+    .logo-text { font-size: 26px; font-weight: 700; color: #1f2937; }
+    .badge {
+      display: inline-block;
+      background: #f3f4f6;
+      color: #6b7280;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 6px;
+    }
+    .greeting { font-size: 18px; font-weight: 600; color: #1f2937; margin-bottom: 18px; }
+    .message { font-size: 16px; color: #4b5563; margin-bottom: 28px; line-height: 1.7; }
+    .features { margin-bottom: 32px; }
+    .feature { display: flex; align-items: flex-start; margin-bottom: 12px; font-size: 14px; color: #374151; }
+    .feature-dot { width: 6px; height: 6px; margin-top: 6px; margin-right: 10px; background: #97FE00; border-radius: 50%; flex-shrink: 0; }
+    .cta { text-align: center; margin: 28px 0; }
+    .cta-button {
+      display: inline-block;
+      background: #97FE00;
+      color: #000000;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .cta-button:hover { background: #7FE000; }
+    .learn-more { text-align: center; margin-top: 18px; }
+    .learn-more a { color: #97FE00; text-decoration: none; font-weight: 500; font-size: 14px; }
+    .divider { height: 1px; background: #e5e7eb; margin: 36px 0; }
+    .footer { text-align: center; color: #9ca3af; font-size: 13px; }
+    .footer a { color: #6b7280; text-decoration: none; }
+    .tracking-pixel { width: 1px; height: 1px; opacity: 0; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🤖 Agentdrop</div>
-            <h1 class="title">Welcome to the Beta!</h1>
-            <p class="subtitle">You're now approved to access Agentdrop's AI-powered platform</p>
-        </div>
-
-        <div class="content">
-            <p>Hi {{USER_NAME}},</p>
-            
-            <p>Great news! 🎉 You've been approved for beta access to <strong>Agentdrop</strong>. We're excited to have you join our community of early users who are revolutionizing how they interact with AI.</p>
-
-            <div class="features">
-                <h3 style="margin-top: 0; color: #1f2937;">What you can do with Agentdrop:</h3>
-                <div class="feature">
-                    <div class="feature-icon">🚀</div>
-                    <span>Create custom AI agents for your specific needs</span>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">💬</div>
-                    <span>Train agents on your own data and documents</span>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🔗</div>
-                    <span>Embed agents on your website or use them in chat</span>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">📊</div>
-                    <span>Track conversations and get insights</span>
-                </div>
-            </div>
-
-            <p>Ready to get started? Click the button below to create your account and begin building your first AI agent:</p>
-
-            <div style="text-align: center;">
-                <a href="{{SIGNUP_URL}}" class="cta-button">🚀 Get Started Now</a>
-            </div>
-
-            <p style="margin-top: 30px; font-size: 14px; color: #6b7280;">
-                <strong>Need help?</strong> Reply to this email or reach out to us at <a href="mailto:support@mail.agentdrop.io" style="color: #667eea;">support@mail.agentdrop.io</a>
-            </p>
-        </div>
-
-        <div class="footer">
-            <p>© 2024 Agentdrop. All rights reserved.</p>
-            <p>You received this email because you joined our waitlist. <a href="#" style="color: #667eea;">Unsubscribe</a></p>
-        </div>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <img src="https://agentdrop.io/brand-logo.png" alt="Agentdrop" class="logo-img"/>
+        <div class="logo-text">Agentdrop</div>
+      </div>
+      <div class="badge">Beta Access Granted</div>
     </div>
 
-    <!-- Tracking pixel for open tracking -->
-    <img src="{{TRACKING_URL}}" class="tracking-pixel" alt="" />
+    <!-- Content -->
+    <div class="content">
+      <div class="greeting">Hi {{USER_NAME}},</div>
+      <div class="message">
+        Congratulations! 🎉 You’ve been approved for <strong>beta access</strong> to <strong>Agentdrop</strong> — the easiest way to create, train, and share AI agents anywhere.
+      </div>
+
+      <div class="features">
+        <div class="feature"><div class="feature-dot"></div><span>Build AI agents without writing code</span></div>
+        <div class="feature"><div class="feature-dot"></div><span>Train agents on your documents & websites</span></div>
+        <div class="feature"><div class="feature-dot"></div><span>Embed them seamlessly on any website</span></div>
+        <div class="feature"><div class="feature-dot"></div><span>Track conversations & actionable insights</span></div>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta">
+        <a href="{{SIGNUP_URL}}" class="cta-button">🚀 Get Started</a>
+      </div>
+      <div class="learn-more">
+        <a href="https://agentdrop.io">Learn more about Agentdrop →</a>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>© 2024 Agentdrop</p>
+      <p><a href="mailto:support@mail.agentdrop.io">support@mail.agentdrop.io</a></p>
+    </div>
+  </div>
+
+  <!-- Tracking Pixel -->
+  <img src="{{TRACKING_URL}}" class="tracking-pixel" alt=""/>
 </body>
 </html>

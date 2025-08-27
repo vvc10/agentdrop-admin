@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient } from "@/lib/supabase-client";
 import { currentUser } from "@clerk/nextjs/server";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 async function isAdmin(): Promise<boolean> {
   try {
@@ -20,11 +15,7 @@ async function isAdmin(): Promise<boolean> {
     const userEmail = user.emailAddresses?.[0]?.emailAddress;
     console.log("Checking admin for user:", user.id, "email:", userEmail);
 
-    // Check if environment variables are set
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error("Missing Supabase environment variables");
-      throw new Error("Missing Supabase environment variables");
-    }
+    const supabaseAdmin = createSupabaseClient();
 
     // First try to find by Clerk user ID
     console.log("Trying to find profile by ID:", user.id);

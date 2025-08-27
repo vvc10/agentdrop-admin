@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
 import { 
   Users, 
   Mail, 
@@ -142,7 +144,7 @@ export default function BetaPage() {
     }
   };
 
-  const handleSendEmail = async (userId: string) => {
+  const handleSendEmail = async (userId: string, isResend: boolean = false) => {
     try {
       setEmailLoading(userId);
       setError(null);
@@ -153,7 +155,8 @@ export default function BetaPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          waitlistId: userId
+          waitlistId: userId,
+          isResend: isResend
         })
       });
 
@@ -162,6 +165,11 @@ export default function BetaPage() {
         throw new Error(errorData.error || 'Failed to send email');
       }
 
+      const result = await response.json();
+      
+      // Show success message
+      setError(null);
+      
       // Refresh the data
       await fetchBetaUsers();
     } catch (err) {
@@ -227,6 +235,10 @@ export default function BetaPage() {
     return status === 'approved' && emailStatus === 'not_sent';
   };
 
+  const canResendEmail = (status: string, emailStatus: string) => {
+    return status === 'approved' && emailStatus !== 'not_sent';
+  };
+
   if (!isLoaded || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -242,56 +254,13 @@ export default function BetaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white shadow-lg border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <Button 
-                onClick={() => router.push('/')} 
-                variant="ghost" 
-                size="icon"
-                className="mr-4"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mr-4 shadow-lg">
-                <Zap className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-slate-900">Beta Program</h1>
-                <p className="text-sm text-slate-600">Approve waitlist users for beta access</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 px-3 py-1">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Admin Access
-              </Badge>
-              <div className="text-right">
-                <p className="text-sm font-medium text-slate-900">
-                  {user?.firstName} {user?.lastName}
-                </p>
-                <p className="text-xs text-slate-600">
-                  {user?.emailAddresses[0]?.emailAddress}
-                </p>
-              </div>
-              <Button onClick={handleSignOut} variant="ghost" size="icon">
-                <LogOut className="h-5 w-5 text-slate-600" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-4xl font-bold text-slate-900 mb-2">Beta Access Management 🚀</h2>
-          <p className="text-slate-600 text-lg">Approve waitlist users to grant them beta access to sign up.</p>
-        </div>
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
+      
+      <div className="flex-1 flex flex-col ml-64">
+        <Header breadcrumbs={["Beta", "Management"]} />
+        
+        <main className="flex-1 p-6 overflow-y-auto">
 
         {/* Error Message */}
         {error && (
@@ -305,87 +274,71 @@ export default function BetaPage() {
 
         {/* Beta Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-yellow-500 to-orange-500 text-white hover:shadow-2xl transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-yellow-100">Pending Approval</CardTitle>
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <Clock className="h-4 w-4 text-white" />
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Pending Approval</h3>
+                <Clock className="h-6 w-6 text-yellow-600" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-1">{getStatusCount('pending')}</div>
-              <p className="text-xs text-yellow-200">
+              <div className="text-3xl font-bold text-gray-900 mb-2">{getStatusCount('pending')}</div>
+              <div className="text-sm text-gray-600">
                 Awaiting approval
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white hover:shadow-2xl transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-emerald-100">Approved</CardTitle>
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <UserCheck className="h-4 w-4 text-white" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-1">{getStatusCount('approved')}</div>
-              <p className="text-xs text-emerald-200">
+            </div>
+
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Approved</h3>
+                <UserCheck className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">{getStatusCount('approved')}</div>
+              <div className="text-sm text-gray-600">
                 Can sign up now
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:shadow-2xl transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-blue-100">Emails Sent</CardTitle>
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <Send className="h-4 w-4 text-white" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-1">
+            </div>
+
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Emails Sent</h3>
+                <Send className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">
                 {betaUsers.filter(user => user.approvalEmailStatus !== 'not_sent').length}
               </div>
-              <p className="text-xs text-blue-200">
+              <div className="text-sm text-gray-600">
                 Approval emails sent
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:shadow-2xl transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-purple-100">Emails Opened</CardTitle>
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <Eye className="h-4 w-4 text-white" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-1">
+            </div>
+
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Emails Opened</h3>
+                <Eye className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">
                 {betaUsers.filter(user => user.approvalEmailStatus === 'opened').length}
               </div>
-              <p className="text-xs text-purple-200">
+              <div className="text-sm text-gray-600">
                 Emails opened by users
-              </p>
-            </CardContent>
-          </Card>
+              </div>
+            </div>
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-8">
+          <div className="mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder="Search users by email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                  className="pl-10 border-gray-300"
               />
             </div>
             <select 
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -394,7 +347,7 @@ export default function BetaPage() {
             <select 
               value={selectedEmailStatus}
               onChange={(e) => setSelectedEmailStatus(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Email Status</option>
               <option value="not_sent">Not Sent</option>
@@ -403,7 +356,7 @@ export default function BetaPage() {
               <option value="opened">Opened</option>
               <option value="failed">Failed</option>
             </select>
-            <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+              <Button className="bg-gray-800 hover:bg-gray-700 text-white">
               <Send className="h-4 w-4 mr-2" />
               Bulk Approve
             </Button>
@@ -411,52 +364,51 @@ export default function BetaPage() {
         </div>
 
         {/* Beta Users List */}
-        <Card className="border-0 shadow-lg bg-white">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Waitlist Users ({filteredUsers.length})</span>
-              <div className="text-sm text-slate-600">
+          <div className="bg-white rounded-lg border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Waitlist Users ({filteredUsers.length})</h3>
+                <div className="text-sm text-gray-600">
                 Showing {filteredUsers.length} of {betaUsers.length} users
               </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="text-left py-3 px-4 font-medium text-slate-900">Email</th>
-                    <th className="text-left py-3 px-4 font-medium text-slate-900">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-slate-900">Email Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-slate-900">Source</th>
-                    <th className="text-left py-3 px-4 font-medium text-slate-900">Joined</th>
-                    <th className="text-left py-3 px-4 font-medium text-slate-900">Actions</th>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="text-left py-3 px-6 font-medium text-gray-900">Email</th>
+                    <th className="text-left py-3 px-6 font-medium text-gray-900">Status</th>
+                    <th className="text-left py-3 px-6 font-medium text-gray-900">Email Status</th>
+                    <th className="text-left py-3 px-6 font-medium text-gray-900">Source</th>
+                    <th className="text-left py-3 px-6 font-medium text-gray-900">Joined</th>
+                    <th className="text-left py-3 px-6 font-medium text-gray-900">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50">
-                      <td className="py-4 px-4">
-                        <div className="font-medium text-slate-900">{user.email}</div>
+                    <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-4 px-6">
+                        <div className="font-medium text-gray-900">{user.email}</div>
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-6">
                         {getStatusBadge(user.status)}
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-6">
                         {getEmailStatusBadge(user.approvalEmailStatus, user.approvalEmailSentAt)}
                         {user.approvalEmailSentAt && (
-                          <div className="text-xs text-slate-500 mt-1">
+                          <div className="text-xs text-gray-500 mt-1">
                             {new Date(user.approvalEmailSentAt).toLocaleDateString()}
                           </div>
                         )}
                       </td>
-                      <td className="py-4 px-4 text-sm text-slate-600">
+                      <td className="py-4 px-6 text-sm text-gray-600">
                         {user.source}
                       </td>
-                      <td className="py-4 px-4 text-sm text-slate-600">
+                      <td className="py-4 px-6 text-sm text-gray-600">
                         {new Date(user.joinedDate).toLocaleDateString()}
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
                           {canApprove(user.status) && (
                             <Button 
@@ -494,7 +446,7 @@ export default function BetaPage() {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => handleSendEmail(user.id)}
+                              onClick={() => handleSendEmail(user.id, false)}
                               disabled={emailLoading === user.id}
                               className="text-blue-600 hover:text-blue-700"
                             >
@@ -506,11 +458,11 @@ export default function BetaPage() {
                               Send Email
                             </Button>
                           )}
-                          {user.approvalEmailStatus === 'failed' && (
+                          {canResendEmail(user.status, user.approvalEmailStatus) && (
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => handleSendEmail(user.id)}
+                              onClick={() => handleSendEmail(user.id, true)}
                               disabled={emailLoading === user.id}
                               className="text-orange-600 hover:text-orange-700"
                             >
@@ -522,7 +474,7 @@ export default function BetaPage() {
                               Resend
                             </Button>
                           )}
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </div>
@@ -532,9 +484,9 @@ export default function BetaPage() {
                 </tbody>
               </table>
             </div>
-          </CardContent>
-        </Card>
+          </div>
       </main>
+      </div>
     </div>
   );
 } 

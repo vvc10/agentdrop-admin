@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { createSupabaseClient } from '@/lib/supabase-client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,6 +9,8 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const supabase = createSupabaseClient();
 
     // Check if user is admin
     const { data: profile, error: profileError } = await supabase
@@ -29,7 +26,7 @@ export async function GET(request: NextRequest) {
     // Get email tracking statistics
     const { data: emailStats, error: emailError } = await supabase
       .from('email_tracking')
-      .select('status, created_at')
+      .select('status, created_at, metadata')
       .eq('email_type', 'beta_approval');
 
     if (emailError) {
@@ -43,6 +40,10 @@ export async function GET(request: NextRequest) {
     const deliveredEmails = emailStats?.filter(e => e.status === 'delivered').length || 0;
     const openedEmails = emailStats?.filter(e => e.status === 'opened').length || 0;
     const failedEmails = emailStats?.filter(e => e.status === 'failed').length || 0;
+    
+    // Calculate resend statistics
+    const resendEmails = emailStats?.filter(e => e.metadata?.is_resend === true).length || 0;
+    const firstTimeEmails = totalEmails - resendEmails;
 
     // Calculate rates
     const deliveryRate = totalEmails > 0 ? (deliveredEmails / totalEmails) * 100 : 0;
@@ -88,6 +89,8 @@ export async function GET(request: NextRequest) {
         delivered: deliveredEmails,
         opened: openedEmails,
         failed: failedEmails,
+        firstTimeEmails: firstTimeEmails,
+        resendEmails: resendEmails,
         deliveryRate: Math.round(deliveryRate * 100) / 100,
         openRate: Math.round(openRate * 100) / 100,
         failureRate: Math.round(failureRate * 100) / 100

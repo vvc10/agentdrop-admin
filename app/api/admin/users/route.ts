@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { createSupabaseClient } from '@/lib/supabase-client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,6 +9,8 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const supabase = createSupabaseClient();
 
     // Check if user is admin
     const { data: profile, error: profileError } = await supabase
@@ -32,13 +29,12 @@ export async function GET(request: NextRequest) {
       .select(`
         id,
         email,
-        first_name,
-        last_name,
         created_at,
-        updated_at,
         is_admin,
         subscription_plan,
-        subscription_expires_at
+        subscription_expires_at,
+        subscribed,
+        credits
       `)
       .order('created_at', { ascending: false });
 
@@ -51,13 +47,15 @@ export async function GET(request: NextRequest) {
     const transformedUsers = users.map(user => ({
       id: user.id,
       email: user.email,
-      name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown',
+      name: user.email.split('@')[0], // Use email prefix as name since we don't have first/last name
       role: user.is_admin ? 'Admin' : 'User',
-      status: user.subscription_expires_at && new Date(user.subscription_expires_at) > new Date() ? 'Active' : 'Inactive',
+      status: user.subscription_expires_at && new Date(user.subscription_expires_at) > new Date() ? 'Pro' : 'Free',
       joinedDate: user.created_at,
-      lastActive: user.updated_at,
-      subscriptionPlan: user.subscription_plan || 'Free',
-      isAdmin: user.is_admin || false
+      lastActive: user.created_at, // We don't have updated_at, so use created_at
+      subscriptionPlan: user.subscription_plan || 'free',
+      isAdmin: user.is_admin || false,
+      subscribed: user.subscribed || false,
+      credits: user.credits || 0
     }));
 
     return NextResponse.json({ users: transformedUsers });
