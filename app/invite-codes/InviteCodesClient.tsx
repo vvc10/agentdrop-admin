@@ -44,10 +44,10 @@ interface InviteCode {
 }
 
 interface InviteCodesClientProps {
-  user: any;
+  user?: any;
 }
 
-export default function InviteCodesClient({ user }: InviteCodesClientProps) {
+export default function InviteCodesClient({ user }: InviteCodesClientProps = {}) {
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);

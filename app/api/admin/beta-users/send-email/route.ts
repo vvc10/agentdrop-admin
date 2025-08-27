@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     const emailResult = await emailService.sendBetaApprovalEmail(emailData, request.url);
 
     // Update waitlist entry with email tracking
-    const updateData = {
+    const updateData: any = {
       approval_email_status: 'sent'
     };
 
