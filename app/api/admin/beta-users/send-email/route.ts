@@ -84,13 +84,13 @@ export async function POST(request: NextRequest) {
     const emailResult = await emailService.sendBetaApprovalEmail(emailData, request.url);
 
     // Update waitlist entry with email tracking
-    const updateData: any = {
+    const updateData: Record<string, any> = {
       approval_email_status: 'sent'
     };
 
     // Only update sent_at timestamp for first-time sends
     if (!isResend) {
-      updateData.approval_email_sent_at = new Date().toISOString();
+      updateData['approval_email_sent_at'] = new Date().toISOString();
     }
 
     const { error: updateError } = await supabase
