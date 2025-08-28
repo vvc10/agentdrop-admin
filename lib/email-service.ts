@@ -1,7 +1,4 @@
-import { Resend } from 'resend';
 import { TemplateUtils, TemplateVariables } from './template-utils';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export interface EmailTrackingData {
   waitlist_id: string;
@@ -20,10 +17,9 @@ export interface BetaApprovalEmailData {
 
 export class EmailService {
   private static instance: EmailService;
-  private resend: Resend | null = null;
 
   constructor() {
-    // Don't initialize Resend in constructor to avoid build-time issues
+    // Empty constructor to avoid any build-time issues
   }
 
   static getInstance(): EmailService {
@@ -33,14 +29,13 @@ export class EmailService {
     return EmailService.instance;
   }
 
-  private getResend(): Resend {
-    if (!this.resend) {
-      if (!process.env.RESEND_API_KEY) {
-        throw new Error('RESEND_API_KEY environment variable is not configured');
-      }
-      this.resend = new Resend(process.env.RESEND_API_KEY);
+  private async createResend() {
+    // Dynamically import Resend only when needed
+    const { Resend } = await import('resend');
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY environment variable is not configured');
     }
-    return this.resend;
+    return new Resend(process.env.RESEND_API_KEY);
   }
 
   async sendBetaApprovalEmail(data: BetaApprovalEmailData, requestUrl?: string): Promise<EmailTrackingData> {
@@ -50,7 +45,8 @@ export class EmailService {
     const htmlContent = this.generateBetaApprovalEmailHTML(data, signupUrl, requestUrl);
 
     try {
-      const result = await this.getResend().emails.send({
+      const resend = await this.createResend();
+      const result = await resend.emails.send({
         from: 'Agentdrop <noreply@mail.agentdrop.io>', // Use your verified domain
         to: [data.email], // Send to the actual recipient
         subject: subject,

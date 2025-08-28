@@ -71,9 +71,8 @@ export async function POST(request: NextRequest) {
       }, { status: 409 });
     }
 
-    // Send email - dynamically import EmailService to avoid build-time issues
-    const { default: EmailService } = await import('@/lib/email-service');
-    const emailService = EmailService.getInstance();
+    // Send email using utility function to avoid build-time issues
+    const { sendBetaApprovalEmail } = await import('@/lib/email-utils');
     const signupUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://agentify.io'}/sign-up`;
     
     const emailData = {
@@ -82,7 +81,7 @@ export async function POST(request: NextRequest) {
       signupUrl: signupUrl
     };
 
-    const emailResult = await emailService.sendBetaApprovalEmail(emailData, request.url);
+    const emailResult = await sendBetaApprovalEmail(emailData, request.url);
 
     // Update waitlist entry with email tracking
     const updateData: Record<string, any> = {
