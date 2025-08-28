@@ -1,25 +1,12 @@
-"use client";
-
 import { ClerkProvider } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
 
 interface ClerkProviderWrapperProps {
   children: React.ReactNode;
 }
 
 export default function ClerkProviderWrapper({ children }: ClerkProviderWrapperProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Don't render ClerkProvider during SSR/build to avoid environment variable issues
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
-  // Only render ClerkProvider on the client side
+  // Always render ClerkProvider to ensure it's available during build and runtime
+  // The environment variables will be available at runtime
   return (
     <ClerkProvider
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}

@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering to avoid build-time Clerk issues
+export const dynamic = 'force-dynamic';
+
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
