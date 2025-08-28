@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createSupabaseClient } from '@/lib/supabase-client';
-import EmailService from '@/lib/email-service';
+// Import EmailService dynamically to avoid build-time instantiation
 
 // Helper function to get resend count for a waitlist entry
 async function getResendCount(supabase: any, waitlistId: string): Promise<number> {
@@ -71,7 +71,8 @@ export async function POST(request: NextRequest) {
       }, { status: 409 });
     }
 
-    // Send email
+    // Send email - dynamically import EmailService to avoid build-time issues
+    const { default: EmailService } = await import('@/lib/email-service');
     const emailService = EmailService.getInstance();
     const signupUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://agentify.io'}/sign-up`;
     
