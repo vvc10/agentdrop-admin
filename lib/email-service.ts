@@ -20,10 +20,10 @@ export interface BetaApprovalEmailData {
 
 export class EmailService {
   private static instance: EmailService;
-  private resend: Resend;
+  private resend: Resend | null = null;
 
   constructor() {
-    this.resend = new Resend(process.env.RESEND_API_KEY);
+    // Don't initialize Resend in constructor to avoid build-time issues
   }
 
   static getInstance(): EmailService {
@@ -33,19 +33,24 @@ export class EmailService {
     return EmailService.instance;
   }
 
-  async sendBetaApprovalEmail(data: BetaApprovalEmailData, requestUrl?: string): Promise<EmailTrackingData> {
-    // Check if API key is configured
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY environment variable is not configured');
+  private getResend(): Resend {
+    if (!this.resend) {
+      if (!process.env.RESEND_API_KEY) {
+        throw new Error('RESEND_API_KEY environment variable is not configured');
+      }
+      this.resend = new Resend(process.env.RESEND_API_KEY);
     }
+    return this.resend;
+  }
 
+  async sendBetaApprovalEmail(data: BetaApprovalEmailData, requestUrl?: string): Promise<EmailTrackingData> {
     const subject = "🎉 You're Approved for Agentdrop Beta Access!";
     const signupUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://agentdrop.io'}/sign-up`;
 
     const htmlContent = this.generateBetaApprovalEmailHTML(data, signupUrl, requestUrl);
 
     try {
-      const result = await this.resend.emails.send({
+      const result = await this.getResend().emails.send({
         from: 'Agentdrop <noreply@mail.agentdrop.io>', // Use your verified domain
         to: [data.email], // Send to the actual recipient
         subject: subject,
